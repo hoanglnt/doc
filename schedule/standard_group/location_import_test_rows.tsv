@@ -1,0 +1,25 @@
+Group name	Duration	Branch opening	Active	Standard name	Description of standard
+	360	Yes	Yes		
+SHORT	360	Yes	Yes		
+F1-A1-01	360	Yes	Yes		
+F9-DUP-01-01-01-01	360	Yes	Yes		
+F9-DUP-01-01-01-01	360	Yes	Yes		
+F9-DU2-01-01-01-01	360	Yes	Yes	ImgDup	
+F9-DU2-01-01-01-01	360	Yes	Yes	ImgDup	
+F9-DUR-01-01-01-01	360	Yes	Yes		
+F9-DUR-01-01-01-01	480	Yes	Yes		
+F9-BRA-01-01-01-01	360	Yes	Yes		
+F9-BRA-01-01-01-01	360	No	Yes		
+F9-ACT-01-01-01-01	360	Yes	Yes		
+F9-ACT-01-01-01-01	360	Yes	No		
+F9-DSC-01-01-01-01	360	Yes	Yes		SoloDescription
+F9-BDU-01-01-01-01	abc	Yes	Yes		
+F9-BD0-01-01-01-01	0	Yes	Yes		
+F9-BDM-01-01-01-01	999999	Yes	Yes		
+F9-BBR-01-01-01-01	360	Maybe	Yes		
+F9-BAC-01-01-01-01	360	Yes	Maybe		
+F9-DSN-01-01-01-01	360	Yes	Yes	S1		
+F9-DSN-01-01-01-01	360	Yes	Yes	S1	OtherDesc
+F9-OK1-01-01-01-01	360	Yes	Yes		
+F9-OK1-01-01-01-01				ExampleStandard	Optional description
+F9-OK2-02-02-02-02	180	No	No		

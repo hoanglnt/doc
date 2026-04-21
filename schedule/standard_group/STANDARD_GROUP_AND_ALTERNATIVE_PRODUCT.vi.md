@@ -6,8 +6,8 @@ Tài liệu này ánh xạ yêu cầu nghiệp vụ, màn hình UI, API, luồng
 
 **Proto chuẩn**
 
-- [proto/schedule/schedule_standard_group/schedule_standard_group.proto](../../../proto/schedule/schedule_standard_group/schedule_standard_group.proto) — `ScheduleStandardGroupService`, ghi chú base path `/api/v1/planogram/schedule-standard-groups`
-- [proto/schedule/alternative_product/alternative_product.proto](../../../proto/schedule/alternative_product/alternative_product.proto) — `AlternativeProductService`, ghi chú base path `/api/v1/planogram/alternative-products`
+- [proto/schedule/schedule_standard_group/schedule_standard_group.proto](../../../fulfillment_wms_schedule/proto/schedule/schedule_standard_group/schedule_standard_group.proto) — `ScheduleStandardGroupService`, ghi chú base path `/api/v1/planogram/schedule-standard-groups`
+- [proto/schedule/alternative_product/alternative_product.proto](../../../fulfillment_wms_schedule/proto/schedule/alternative_product/alternative_product.proto) — `AlternativeProductService`, ghi chú base path `/api/v1/planogram/alternative-products`
 
 ---
 
@@ -36,7 +36,7 @@ Tài liệu này ánh xạ yêu cầu nghiệp vụ, màn hình UI, API, luồng
 ### Spec so với code (luật khớp)
 
 - Tài liệu **Master / planogram** thường mô tả khớp là **100% SKU + số lượng** giữa nhóm tiêu chuẩn và lịch.
-- **Codebase này** thực hiện đúng ý đó **và mở rộng**: [`sync_info.go`](../../../application/domains/schedule_standard_group/usecase/sync_info.go) tạo hash cho **tổ hợp sản phẩm gốc** và **mọi tổ hợp thay thế hợp lệ** (`hashGroupedProductsWithAlternatives`, `generateCombinationsRecursive`) để lịch dùng SKU thay thế vẫn có thể khớp.
+- **Codebase này** thực hiện đúng ý đó **và mở rộng**: [`sync_info.go`](../../../fulfillment_wms_schedule/application/domains/schedule_standard_group/usecase/sync_info.go) tạo hash cho **tổ hợp sản phẩm gốc** và **mọi tổ hợp thay thế hợp lệ** (`hashGroupedProductsWithAlternatives`, `generateCombinationsRecursive`) để lịch dùng SKU thay thế vẫn có thể khớp.
 
 ---
 
@@ -101,7 +101,7 @@ Server kiểm tra các `image_name` **bắt buộc** và chuyển trạng thái 
 | Đồng bộ các nhóm đã duyệt đã chọn xuống lịch khớp | `Sync` | (RPC không có comment path) | `SyncRequest`: `ids` | `SyncResponse`: `result` |
 | Biến thể apply-all | `ApplyAll` | `PUT` `/apply-all` | `ApplyAllRequest`: `ids` | `ApplyAllResponse`: `result` |
 
-Cả hai gọi cùng use case [`SyncInfo`](../../../application/domains/schedule_standard_group/usecase/sync_info.go) từ [`handler.go`](../../../application/domains/schedule_standard_group/delivery/grpc/handler/handler.go).
+Cả hai gọi cùng use case [`SyncInfo`](../../../fulfillment_wms_schedule/application/domains/schedule_standard_group/usecase/sync_info.go) từ [`handler.go`](../../../fulfillment_wms_schedule/application/domains/schedule_standard_group/delivery/grpc/handler/handler.go).
 
 ---
 
@@ -190,8 +190,8 @@ flowchart TD
 
 | Domain | Điểm vào | Use case | Dữ liệu |
 |--------|----------|----------|---------|
-| Schedule standard group | [`delivery/grpc/handler/handler.go`](../../../application/domains/schedule_standard_group/delivery/grpc/handler/handler.go) | [`usecase.go`](../../../application/domains/schedule_standard_group/usecase/usecase.go), [`sync_info.go`](../../../application/domains/schedule_standard_group/usecase/sync_info.go) | [`db/schedule_standard_group`](../../../application/domains/db/schedule_standard_group/), [`schedule_metadata`](../../../application/domains/db/schedule/schedule_metadata/), [`location_schedule_config`](../../../application/domains/db/location_schedule_config/) |
-| Alternative product | [`alternative_product/delivery/grpc/handler`](../../../application/domains/alternative_product/delivery/grpc/handler/handler.go) | [`alternative_product/usecase`](../../../application/domains/alternative_product/usecase/usecase.go) | [`db/alternative_product`](../../../application/domains/db/alternative_product/) |
+| Schedule standard group | [`delivery/grpc/handler/handler.go`](../../../fulfillment_wms_schedule/application/domains/schedule_standard_group/delivery/grpc/handler/handler.go) | [`usecase.go`](../../../fulfillment_wms_schedule/application/domains/schedule_standard_group/usecase/usecase.go), [`sync_info.go`](../../../fulfillment_wms_schedule/application/domains/schedule_standard_group/usecase/sync_info.go) | [`db/schedule_standard_group`](../../../fulfillment_wms_schedule/application/domains/db/schedule_standard_group/), [`schedule_metadata`](../../../fulfillment_wms_schedule/application/domains/db/schedule/schedule_metadata/), [`location_schedule_config`](../../../fulfillment_wms_schedule/application/domains/db/location_schedule_config/) |
+| Alternative product | [`alternative_product/delivery/grpc/handler`](../../../fulfillment_wms_schedule/application/domains/alternative_product/delivery/grpc/handler/handler.go) | [`alternative_product/usecase`](../../../fulfillment_wms_schedule/application/domains/alternative_product/usecase/usecase.go) | [`db/alternative_product`](../../../fulfillment_wms_schedule/application/domains/db/alternative_product/) |
 
 ### Pipeline `SyncInfo` (đồng bộ khi gọi từ handler `Sync` / `ApplyAll`)
 
@@ -208,7 +208,7 @@ flowchart TD
 
 | Sự kiện | Producer | Payload | Consumer trong repo này |
 |---------|----------|---------|-------------------------|
-| Sau **Duyệt** (nhóm active) hoặc **Toggle active** (đã duyệt → active) | [`usecase.go`](../../../application/domains/schedule_standard_group/usecase/usecase.go) `KafkaPublisher.WriteByKey` | `UcSyncInfoRequest` → topic `config.KafkaTopics.Producers.SyncInfoStandardGroup` ([`config/config.go`](../../../config/config.go)) | **Không có** — giả định worker ngoài gọi cùng logic `SyncInfo` hoặc RPC `Sync` |
+| Sau **Duyệt** (nhóm active) hoặc **Toggle active** (đã duyệt → active) | [`usecase.go`](../../../fulfillment_wms_schedule/application/domains/schedule_standard_group/usecase/usecase.go) `KafkaPublisher.WriteByKey` | `UcSyncInfoRequest` → topic `config.KafkaTopics.Producers.SyncInfoStandardGroup` ([`config/config.go`](../../../fulfillment_wms_schedule/config/config.go)) | **Không có** — giả định worker ngoài gọi cùng logic `SyncInfo` hoặc RPC `Sync` |
 
 ### Bên trong `SyncInfo` (rút gọn)
 
@@ -230,10 +230,10 @@ flowchart LR
 
 | Bảng | Entity | Vai trò |
 |------|--------|---------|
-| `wms_schedule_standard_group` | [`db/schedule_standard_group/entity`](../../../application/domains/db/schedule_standard_group/entity/schedule_standard_group.go) | Bản ghi master: `group_code`, `group_name`, `status_id`, `is_active`, `duration`, `display_description`, `standard_image` (chuỗi JSON), `reason_reject`, audit |
-| `wms_schedule_metadata` | [`db/schedule/schedule_metadata/entity`](../../../application/domains/db/schedule/schedule_metadata/entity/schedule_metadata.go) | Dòng của một “schedule”; với nhóm tiêu chuẩn, `schedule_id` trỏ **id nhóm tiêu chuẩn** và `metadata_source_type` = **`STANDARD_GROUP`** (`SCHEDULE_METADATA_SOURCE_TYPE_STANDARD_GROUP`) |
-| `planogram_alternative_product` | [`db/alternative_product/entity`](../../../application/domains/db/alternative_product/entity/alternative_product.go) | `source_id` = id nhóm tiêu chuẩn, `source_type` = loại standard schedule; `product_id` = dòng gốc; `alternative_product_id` + trường SKU/barcode/name denormalized |
-| `wms_schedule_config` | [`db/schedule/schedule_config/entity`](../../../application/domains/db/schedule/schedule_config/entity/schedule_config.go) | **Location schedule** được cập nhật khi sync (`standard_image`, duration, display description qua model save của location schedule) |
+| `wms_schedule_standard_group` | [`db/schedule_standard_group/entity`](../../../fulfillment_wms_schedule/application/domains/db/schedule_standard_group/entity/schedule_standard_group.go) | Bản ghi master: `group_code`, `group_name`, `status_id`, `is_active`, `duration`, `display_description`, `standard_image` (chuỗi JSON), `reason_reject`, audit |
+| `wms_schedule_metadata` | [`db/schedule/schedule_metadata/entity`](../../../fulfillment_wms_schedule/application/domains/db/schedule/schedule_metadata/entity/schedule_metadata.go) | Dòng của một “schedule”; với nhóm tiêu chuẩn, `schedule_id` trỏ **id nhóm tiêu chuẩn** và `metadata_source_type` = **`STANDARD_GROUP`** (`SCHEDULE_METADATA_SOURCE_TYPE_STANDARD_GROUP`) |
+| `planogram_alternative_product` | [`db/alternative_product/entity`](../../../fulfillment_wms_schedule/application/domains/db/alternative_product/entity/alternative_product.go) | `source_id` = id nhóm tiêu chuẩn, `source_type` = loại standard schedule; `product_id` = dòng gốc; `alternative_product_id` + trường SKU/barcode/name denormalized |
+| `wms_schedule_config` | [`db/schedule/schedule_config/entity`](../../../fulfillment_wms_schedule/application/domains/db/schedule/schedule_config/entity/schedule_config.go) | **Location schedule** được cập nhật khi sync (`standard_image`, duration, display description qua model save của location schedule) |
 
 ### Đọc/ghi theo tính năng
 
@@ -251,7 +251,7 @@ flowchart LR
 
 1. **Tìm sản phẩm** cho modal thay thể **không thuộc** `AlternativeProductService`; tích hợp **API catalog** riêng.
 2. **Kafka topic `SyncInfoStandardGroup`:** **có producer** trong repo; **không thấy consumer** trong repo — consumer nằm trong queue_manager, trong đó gọi về hàm `SyncInfo` trong repo này.
-3. **Tài liệu Master “100% SKU + SL”** so với **code**: code **bổ sung tổ hợp thay thế** khi khớp; QA nên kiểm kịch bản thay SKU với [`sync_info.go`](../../../application/domains/schedule_standard_group/usecase/sync_info.go).
+3. **Tài liệu Master “100% SKU + SL”** so với **code**: code **bổ sung tổ hợp thay thế** khi khớp; QA nên kiểm kịch bản thay SKU với [`sync_info.go`](../../../fulfillment_wms_schedule/application/domains/schedule_standard_group/usecase/sync_info.go).
 4. **Tên field proto** `standard_schedule_id` trong bounded context này là **id nhóm tiêu chuẩn** — client nên thống nhất naming để tránh nhầm.
 
 ---
