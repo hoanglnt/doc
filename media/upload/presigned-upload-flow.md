@@ -56,7 +56,7 @@ flowchart TB
   cu -->|"Head/Get metadata, size"| obj
   cu -->|"UpdateMany"| db
   cu -.->|"images"| timg
-  cu -.->|"video"| tvid
+  cu -.->|"if is_transcode_video"| tvid
   timg --> wip
   tvid --> vtr
 
@@ -117,7 +117,7 @@ If PUT fails or the user abandons the flow, you may have **file_info rows withou
 |------|--------|
 | **Handler** | `Handler.CompleteUpload` |
 | **Usecase** | `usecase.CompleteUpload` |
-| **Request** | `CompleteUploadRequest`: `object_keys[]`, `is_remove_background`, `is_resize` |
+| **Request** | `CompleteUploadRequest`: `object_keys[]`, `is_remove_background`, `is_resize`, `is_transcode_video` (opt-in MP4→HLS; only applies to video-like keys) |
 | **Response** | `CompleteUploadResponse`: `result` (`int64`, `1` means success in current implementation) |
 
 ### Behaviour (summary)
@@ -128,7 +128,7 @@ If PUT fails or the user abandons the flow, you may have **file_info rows withou
 - **Persist**: `UpdateMany` on `file_info` with **size in KB** (from metadata).
 - **Side effects** (when configured):
   - **Images** (by extension): Kafka message to image-processing topic with `object_keys`, remove-background and resize flags.
-  - **Video** (by extension): Kafka message to video transcode topic with `source_url` derived from CDN/gateway config and `video_id` tied to `file_id`.
+  - **Video**: Only when **`is_transcode_video`** is true (FE opt-in). Eligible extensions (e.g. `.mp4`) receive a Kafka message on the video transcode topic with `source_url` and `video_id` tied to `file_id`.
 
 ---
 
@@ -148,7 +148,7 @@ If PUT fails or the user abandons the flow, you may have **file_info rows withou
 - [ ] **Order**: Always call `CompleteUpload` only **after** the storage PUT succeeds (object present in bucket).
 - [ ] **Keys**: Use the **`object_key`** from `GenerateUploadURLs`, not the original client file name.
 - [ ] **Expiry**: Presigned URLs expire; upload before TTL (see `Media.UploadExpireTime`).
-- [ ] **Video**: Server requires `Service.Kafka.Producers.VideoTranscode` and resolvable CDN URL for transcode workers; misconfiguration fails `CompleteUpload` for video keys.
+- [ ] **Video (HLS)**: Set **`is_transcode_video`** on `CompleteUpload` when the client wants streaming output; otherwise uploads are not enqueued for transcode. When enabled for video-like keys, the server requires `Service.Kafka.Producers.VideoTranscode` and a resolvable CDN/public URL.
 - [ ] **Idempotency**: Re-calling `CompleteUpload` for the same keys may re-publish Kafka / re-run side effects depending on worker design; confirm product expectations.
 
 ---
